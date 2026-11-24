@@ -70,6 +70,9 @@ firmware/
            dcancan_fw3.2_app.bin                - application only, write at 0x20000
            bootloader.bin, partition-table.bin, ota_data_initial.bin
   SHA256SUMS.txt
+app/
+  DCANCAN_v0.2.0.apk         Android app (Android 8.0+), Ukrainian / English / German
+  SHA256SUMS.txt
 hardware/
   dcancan_v3_schematic.pdf   schematic of board v3 (A3)
   3d/                        3D views of board v3 (top, bottom, with display, isometric)
@@ -170,18 +173,82 @@ Check the files against `firmware/SHA256SUMS.txt`.
 
 ## Android app
 
-The D.CANCAN app (Android 8.0+) runs in the background and talks to the device over Bluetooth LE:
+`app/DCANCAN_v0.2.0.apk` — the D.CANCAN app for Android 8.0 and newer (about 100 KB, no ads, no account).
+It runs in the background and talks to the device over Bluetooth LE.
 
-- sends the time, town, street and speed limit to the device. The limit comes from TomTom (road-sign data,
-  free key from developer.tomtom.com), then OpenStreetMap, then a rule of thumb (50 in towns / 90 / 110 / 130, based on the
-  Ukrainian traffic rules — may differ in your country);
-- shows regeneration notifications;
-- **app languages: Ukrainian, English, German.** By default the app follows the phone language
-  (anything else → English). You can change it under *Language → App language*;
-- sets the device screen language (see above).
+**What it does**
 
-First pairing: start the service near the car with the ignition on. The device shows a 6-digit code;
-enter it in the Android pairing dialog.
+- Sends the time, town, street and speed limit to the device (for the "drive" screen).
+  The speed limit comes from:
+  1. TomTom (road-sign data). This needs a free key, see below.
+  2. OpenStreetMap, if there is no key or TomTom has no data.
+  3. A rule of thumb if neither has a value: 50 km/h in towns, 90 outside, 110 / 130 on highways.
+     This follows the Ukrainian traffic rules and may differ in your country.
+- Shows the device data: soot, distance since regeneration, km to the next one, odometer, voltage, trip.
+- Shows notifications: *DPF regeneration soon*, *DPF regeneration in progress*, *regeneration interrupted / finished*
+  and *Time for a break* after 2 h of driving.
+- **Languages: Ukrainian, English, German.** By default the app follows the phone language
+  (any other language → English).
+- Sets the language of the device screen (Ukrainian / English).
+
+### Installation
+
+The app is not in Google Play. Install the APK file directly:
+
+1. Copy `DCANCAN_v0.2.0.apk` to the phone (USB cable, cloud drive, messenger) and open it.
+2. Android asks to allow *Install unknown apps* for the app you opened it from (file manager, browser,
+   messenger). Allow it and tap **Install**.
+3. If Google Play Protect warns about an unknown developer, tap *More details → Install anyway*.
+   The APK is signed by the author's own key, not by Google.
+
+Alternatively, with *USB debugging* enabled on the phone: `adb install -r DCANCAN_v0.2.0.apk`.
+
+**Updating:** install the new APK over the old one. Settings and the pairing stay.
+
+### First setup
+
+Open **D.CANCAN** and go from top to bottom:
+
+1. **Grant permissions**: *Nearby devices* (Bluetooth), *Location* and *Notifications*.
+2. **"Location: allow all the time" (for background)**: in the system settings choose *Allow all the time*.
+   Without it the speed limit is not updated while the screen is off.
+3. **Don't restrict background work (battery)**: choose *Allow*. Otherwise Android may stop the service.
+   Some phones (Xiaomi, Huawei, Samsung…) also have their own "battery saver" or "autostart" lists. Allow D.CANCAN there too.
+4. **TomTom key** (optional, recommended): tap **Get a free TomTom key**, register at developer.tomtom.com and
+   copy the default key from *Keys*. Paste it and tap **Save key**. The free plan needs no credit card and
+   is enough for daily driving: the app asks at most every ~80 m / 10 s of driving.
+5. **Language**: *App language* (System / Українська / English / Deutsch) and *Device screen language*
+   (Українська / English).
+6. Tap **Start service**, standing near the car with the ignition on.
+   The phone finds `D.CANCAN-XXXX` and the device screen shows a **6-digit code**. Enter it in the Android
+   pairing dialog.
+
+After this you do not need to open the app. The service starts with the phone, connects whenever the device is
+in range, and keeps a small permanent "D.CANCAN" notification (Android requires it for background services).
+
+### Screens of the app
+
+| Card | Content |
+|---|---|
+| **Status** | service state, device address, permissions |
+| **Device** | firmware version, ignition / engine, speed, soot, regeneration, odometer, coolant, battery, trip |
+| **Navigation** | town, street, speed limit and its source |
+| **Log** | the last connection events (useful for bug reports) |
+
+Buttons: **Start service / Stop service**, **Find the device again** (forget the saved device and search anew).
+
+### Troubleshooting
+
+| Problem | What to do |
+|---|---|
+| Device not found | Ignition on, phone within a few metres, Bluetooth on. Tap **Find the device again**. |
+| Wrong code / pairing failed | In Android Bluetooth settings remove `D.CANCAN-XXXX`. On the device run `ble forget` (deletes all paired phones). Then search again. |
+| No speed limit when the screen is off | Location permission must be *Allow all the time*. Battery optimisation must be off. |
+| Device screen stays in Ukrainian | Firmware 3.2 or newer is needed. The language is sent when the phone connects. |
+| Limit is "by traffic rules" only | No TomTom key, or TomTom / OpenStreetMap have no data for this road. |
+
+**Privacy:** the app sends your position only to TomTom (if you entered a key) and to the OpenStreetMap
+Overpass API to get the speed limit. Nothing else leaves the phone. There is no account and no analytics.
 
 ## First start
 

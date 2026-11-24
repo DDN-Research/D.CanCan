@@ -71,6 +71,9 @@ firmware/
            dcancan_fw3.2_app.bin               - nur Anwendung, Adresse 0x20000
            bootloader.bin, partition-table.bin, ota_data_initial.bin
   SHA256SUMS.txt
+app/
+  DCANCAN_v0.2.0.apk         Android-App (Android 8.0+), Ukrainisch / Englisch / Deutsch
+  SHA256SUMS.txt
 hardware/
   dcancan_v3_schematic.pdf   Schaltplan der Platine v3 (A3)
   3d/                        3D-Ansichten der Platine v3 (oben, unten, mit Display, isometrisch)
@@ -173,18 +176,84 @@ Prüfsummen: `firmware/SHA256SUMS.txt`.
 
 ## Android-App
 
-Die App D.CANCAN (Android 8.0+) läuft im Hintergrund und kommuniziert per Bluetooth LE mit dem Gerät:
+`app/DCANCAN_v0.2.0.apk` — die App D.CANCAN für Android 8.0 und neuer (etwa 100 KB, ohne Werbung und ohne Konto).
+Sie läuft im Hintergrund und kommuniziert per Bluetooth LE mit dem Gerät.
 
-- überträgt Uhrzeit, Ort, Straße und Tempolimit an das Gerät. Das Limit stammt von TomTom (Verkehrszeichendaten,
-  kostenloser Schlüssel auf developer.tomtom.com), sonst von OpenStreetMap, sonst aus einer Faustregel (50 innerorts / 90 / 110 / 130,
-  nach der ukrainischen StVO — kann in Ihrem Land abweichen);
-- zeigt Regenerationsmeldungen an;
-- **App-Sprachen: Ukrainisch, Englisch, Deutsch.** Standardmäßig folgt die App der Telefonsprache
-  (andere → Englisch). Umstellen unter *Sprache → App-Sprache*;
-- stellt die Sprache des Gerätedisplays ein (siehe oben).
+**Funktionen**
 
-Erste Kopplung: den Dienst in der Nähe des Fahrzeugs bei eingeschalteter Zündung starten. Das Gerät zeigt einen
-6-stelligen Code, der im Android-Kopplungsdialog eingegeben wird.
+- Überträgt Uhrzeit, Ort, Straße und Tempolimit an das Gerät (für den Fahrbildschirm).
+  Das Tempolimit kommt:
+  1. Von TomTom (Verkehrszeichendaten). Dafür ist ein kostenloser Schlüssel nötig, siehe unten.
+  2. Von OpenStreetMap, wenn kein Schlüssel vorhanden ist oder TomTom keine Daten hat.
+  3. Aus einer Faustregel, wenn keiner der beiden einen Wert hat: 50 km/h innerorts, 90 außerorts,
+     110 / 130 auf Schnellstraßen. Das entspricht der ukrainischen StVO und kann in Ihrem Land abweichen.
+- Zeigt die Gerätedaten: Ruß, Strecke seit Regeneration, km bis zur nächsten, Kilometerstand, Spannung, Fahrt.
+- Zeigt Benachrichtigungen: *DPF-Regeneration bald*, *DPF-Regeneration läuft*, *Regeneration abgebrochen / beendet*
+  und *Zeit für eine Pause* nach 2 h Fahrt.
+- **Sprachen: Ukrainisch, Englisch, Deutsch.** Standardmäßig folgt die App der Telefonsprache
+  (jede andere Sprache → Englisch).
+- Stellt die Sprache des Gerätedisplays ein (Ukrainisch / Englisch).
+
+### Installation
+
+Die App ist nicht bei Google Play. Die APK-Datei wird direkt installiert:
+
+1. `DCANCAN_v0.2.0.apk` auf das Telefon kopieren (USB-Kabel, Cloud-Speicher, Messenger) und öffnen.
+2. Android fragt, ob die App, mit der Sie die Datei öffnen (Dateimanager, Browser, Messenger), *unbekannte Apps
+   installieren* darf. Erlauben und **Installieren** tippen.
+3. Falls Google Play Protect vor einem unbekannten Entwickler warnt: *Weitere Details → Trotzdem installieren*.
+   Die APK ist mit dem eigenen Schlüssel des Autors signiert, nicht von Google.
+
+Alternativ mit aktiviertem *USB-Debugging*: `adb install -r DCANCAN_v0.2.0.apk`.
+
+**Update:** die neue APK über die alte installieren. Einstellungen und Kopplung bleiben erhalten.
+
+### Ersteinrichtung
+
+**D.CANCAN** öffnen und von oben nach unten vorgehen:
+
+1. **Berechtigungen erteilen**: *Geräte in der Nähe* (Bluetooth), *Standort* und *Benachrichtigungen*.
+2. **„Standort immer zulassen“ (für Hintergrund)**: in den Systemeinstellungen *Immer zulassen* wählen.
+   Ohne diese Einstellung wird das Tempolimit bei ausgeschaltetem Bildschirm nicht aktualisiert.
+3. **Hintergrundnutzung nicht einschränken (Akku)**: *Zulassen* wählen. Sonst kann Android den Dienst beenden.
+   Manche Telefone (Xiaomi, Huawei, Samsung …) haben zusätzlich eigene Listen für „Energiesparen“ oder „Autostart“ —
+   D.CANCAN dort ebenfalls erlauben.
+4. **TomTom-Schlüssel** (optional, empfohlen): **Kostenlosen TomTom-Schlüssel holen** tippen, auf developer.tomtom.com
+   registrieren und den Standardschlüssel unter *Keys* kopieren. Einfügen und **Schlüssel speichern** tippen.
+   Der kostenlose Tarif braucht keine Kreditkarte und reicht für tägliche Fahrten: Die App fragt höchstens alle ~80 m / 10 s Fahrt an.
+5. **Sprache**: *App-Sprache* (Systemsprache / Українська / English / Deutsch) und *Sprache des Gerätedisplays*
+   (Українська / English).
+6. In der Nähe des Fahrzeugs bei eingeschalteter Zündung **Dienst starten** tippen.
+   Das Telefon findet `D.CANCAN-XXXX` und das Gerätedisplay zeigt einen **6-stelligen Code**. Diesen im
+   Android-Kopplungsdialog eingeben.
+
+Danach muss die App nicht mehr geöffnet werden. Der Dienst startet mit dem Telefon, verbindet sich automatisch,
+sobald das Gerät in Reichweite ist, und zeigt eine kleine dauerhafte Benachrichtigung „D.CANCAN“ (Android verlangt
+sie für Hintergrunddienste).
+
+### App-Oberfläche
+
+| Karte | Inhalt |
+|---|---|
+| **Status** | Zustand des Dienstes, Geräteadresse, Berechtigungen |
+| **Gerät** | Firmware-Version, Zündung / Motor, Geschwindigkeit, Ruß, Regeneration, Kilometerstand, Kühlmittel, Spannung, Fahrt |
+| **Navigation** | Ort, Straße, Tempolimit und seine Quelle |
+| **Protokoll** | die letzten Verbindungsereignisse (nützlich für Fehlerberichte) |
+
+Schaltflächen: **Dienst starten / Dienst beenden**, **Gerät erneut suchen** (gespeichertes Gerät vergessen und neu suchen).
+
+### Fehlerbehebung
+
+| Problem | Lösung |
+|---|---|
+| Gerät wird nicht gefunden | Zündung an, Telefon wenige Meter entfernt, Bluetooth an. **Gerät erneut suchen** tippen. |
+| Falscher Code / Kopplung fehlgeschlagen | In den Android-Bluetooth-Einstellungen `D.CANCAN-XXXX` entfernen. Am Gerät `ble forget` ausführen (löscht alle gekoppelten Telefone). Dann neu suchen. |
+| Kein Tempolimit bei ausgeschaltetem Bildschirm | Standortberechtigung muss *Immer zulassen* sein, Akkuoptimierung ausschalten. |
+| Gerätedisplay bleibt Ukrainisch | Firmware 3.2 oder neuer ist nötig. Die Sprache wird beim Verbinden des Telefons übertragen. |
+| Limit nur „nach Verkehrsregeln“ | Kein TomTom-Schlüssel, oder TomTom / OpenStreetMap haben keine Daten für diese Straße. |
+
+**Datenschutz:** Die App sendet Ihre Position nur an TomTom (wenn ein Schlüssel eingetragen ist) und an die
+OpenStreetMap-Overpass-API, um das Tempolimit zu ermitteln. Sonst verlässt nichts das Telefon. Es gibt kein Konto und keine Analyse.
 
 ## Erste Inbetriebnahme
 
